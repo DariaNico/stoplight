@@ -1,50 +1,36 @@
+int whiteWalk2 = 8;
+int redWalk2 = 9;
+int greenDrive2 = 10;
+int yellowDrive2 = 11;
+int redDrive2 = 12;
+int crossButton = 5;
+int redWalk1 = 6;
+int whiteWalk1 = 7;
+int greenDrive1 = 4;
+int yellowDrive1 = 3;
+int redDrive1 = 2;
+bool buttonState = digitalRead(crossButton);
+
 void setup() {
-  // put your setup code here, to run once:
-  pinMode(2, OUTPUT);
-  pinMode(3, OUTPUT);
-  pinMode(4, OUTPUT);
-  pinMode(5, INPUT);
-  pinMode(6, OUTPUT);xs
-  pinMode(7, OUTPUT);
+ pinMode(redDrive1, OUTPUT);
+  pinMode(yellowDrive1, OUTPUT);
+  pinMode(greenDrive1, OUTPUT);
+  pinMode(crossButton, INPUT);
+  pinMode(redWalk1, OUTPUT);
+  pinMode(whiteWalk1, OUTPUT);
+  pinMode(whiteWalk2, OUTPUT);
+  pinMode(redWalk2, OUTPUT);
+  pinMode(greenDrive2, OUTPUT);
+  pinMode(yellowDrive2, OUTPUT);
+  pinMode(redDrive2, OUTPUT);
 }
 
-void redDrive (bool state) {
-  if (state) {
-    digitalWrite(2, HIGH);
-  } else {
-    digitalWrite(2, LOW);
-  }
-}
 
-void yellowDrive (bool state) {
-  if (state) {
-    digitalWrite(3, HIGH);
+void light (int lightPin, bool state) {
+    if (state) {
+    digitalWrite(lightPin, HIGH);
   } else {
-    digitalWrite(3, LOW);
-  }
-}
-
-void greenDrive (bool state) {
-  if (state) {
-    digitalWrite(4, HIGH);
-  } else {
-    digitalWrite(4, LOW);
-  }
-}
-
-void whiteWalk (bool state) {
-  if (state) {
-    digitalWrite(7, HIGH);
-  } else {
-    digitalWrite(7, LOW);
-  }
-}
-
-void redWalk (bool state) {
-  if (state) {
-    digitalWrite(6, HIGH);
-  } else {
-    digitalWrite(6, LOW);
+    digitalWrite(lightPin, LOW);
   }
 }
 
@@ -61,40 +47,78 @@ void blink(int light, int secs) {
   }
 }
 
-void loop() {
-  // put your main code here, to run repeatedly:
-  bool buttonState = digitalRead(5);
-
-while (buttonState == LOW) {
-  whiteWalk(true);
-  redDrive(true);
-  redWalk(false);
-  greenDrive(false);
-  yellowDrive(false);
-  buttonState = digitalRead(5);
+void Side1Stop () {
+  light(redWalk1, true);
+  light(redDrive1, true);
+  light(whiteWalk1, false);
+  light(yellowDrive1, false);
+  light(greenDrive1, false);
 }
 
-  delay(3000);
-  redDrive(false);
-  whiteWalk(false);
-  greenDrive(true);
-  redWalk(true);
-  
-  // keep walk light on for 2 secs
-  delay(2000);
-  whiteWalk(false);
-  blink(6,6);
-  greenDrive(false);
-  yellowDrive(true);
-  blink(6,2);
-  
-  redWalk(true);
-  yellowDrive(false);
-  redDrive(true);
-  buttonState = digitalRead(5);
-  
-  // start blinking red walk for 8 seconds before solid red
-  
-  // after 8 sec of green, turn yellow for 2 secs before red
+void Side2Go () {
+  light(greenDrive2, true);
+  light(whiteWalk2, true);
+  light(redWalk2, false);
+  light(redDrive2, false);
+  light(yellowDrive2, false);
+}
 
+void Side1Go () {
+  light(greenDrive1, true);
+  light(whiteWalk1, true);
+  light(redWalk1, false);
+  light(redDrive1, false);
+  light(yellowDrive1, false);
+}
+
+void Side2Stop () {
+  light(redWalk2, true);
+  light(redDrive2, true);
+  light(greenDrive2, false);
+  light(yellowDrive2, false);
+  light(whiteWalk2, false);
+}
+
+void transition (int side) {
+  if (side == 1) {
+    light(whiteWalk1, false);
+    blink(redWalk1, 6);
+    light(greenDrive1, false);
+    light(yellowDrive1, true);
+    blink(redWalk1, 2);
+    Side1Stop();  
+    Side2Go();  
+  } else {
+    light(whiteWalk2, false);
+    blink(redWalk2, 6);
+    light(greenDrive2, false);
+    light(yellowDrive2, true);
+    blink(redWalk2, 2);
+    Side2Stop();  
+    Side1Go();
+    
+  }
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  buttonState = digitalRead(crossButton);
+  
+  while (buttonState == LOW) {
+      buttonState = digitalRead(crossButton);
+      Side2Stop();
+      Side1Go();
+  }
+  
+  transition(1);
+  buttonState = digitalRead(crossButton);
+
+  while (buttonState == LOW) {
+    buttonState = digitalRead(crossButton);
+    Side1Stop();
+    Side2Go();    
+  }
+ 
+ transition(2);
+  
 }
