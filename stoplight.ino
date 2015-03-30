@@ -3,28 +3,16 @@ int redWalk2 = 9;
 int greenDrive2 = 10;
 int yellowDrive2 = 11;
 int redDrive2 = 12;
-int crossButton = 5;
+int crossButton = 2;
 int redWalk1 = 6;
 int whiteWalk1 = 7;
-int greenDrive1 = 4;
-int yellowDrive1 = 3;
-int redDrive1 = 2;
-bool buttonState = digitalRead(crossButton);
-
-void setup() {
- pinMode(redDrive1, OUTPUT);
-  pinMode(yellowDrive1, OUTPUT);
-  pinMode(greenDrive1, OUTPUT);
-  pinMode(crossButton, INPUT);
-  pinMode(redWalk1, OUTPUT);
-  pinMode(whiteWalk1, OUTPUT);
-  pinMode(whiteWalk2, OUTPUT);
-  pinMode(redWalk2, OUTPUT);
-  pinMode(greenDrive2, OUTPUT);
-  pinMode(yellowDrive2, OUTPUT);
-  pinMode(redDrive2, OUTPUT);
-}
-
+int greenDrive1 = 5;
+int yellowDrive1 = 4;
+int redDrive1 = 3;
+int buttonState = 0;
+int timeRemaining = 40;
+int state = 1;
+int newState = 2;
 
 void light (int lightPin, bool state) {
     if (state) {
@@ -79,46 +67,90 @@ void Side2Stop () {
   light(whiteWalk2, false);
 }
 
-void transition (int side) {
-  if (side == 1) {
-    light(whiteWalk1, false);
-    blink(redWalk1, 6);
-    light(greenDrive1, false);
-    light(yellowDrive1, true);
-    blink(redWalk1, 2);
-    Side1Stop();  
-    Side2Go();  
-  } else {
-    light(whiteWalk2, false);
-    blink(redWalk2, 6);
-    light(greenDrive2, false);
-    light(yellowDrive2, true);
-    blink(redWalk2, 2);
-    Side2Stop();  
-    Side1Go();
-    
-  }
+void walkButton () {
+  if  (timeRemaining > 12) {
+     timeRemaining = 12;
+   }
+}
+void setup() {
+ pinMode(redDrive1, OUTPUT);
+  pinMode(yellowDrive1, OUTPUT);
+  pinMode(greenDrive1, OUTPUT);
+  pinMode(crossButton, INPUT);
+  pinMode(redWalk1, OUTPUT);
+  pinMode(whiteWalk1, OUTPUT);
+  pinMode(whiteWalk2, OUTPUT);
+  pinMode(redWalk2, OUTPUT);
+  pinMode(greenDrive2, OUTPUT);
+  pinMode(yellowDrive2, OUTPUT);
+  pinMode(redDrive2, OUTPUT);
+  Side1Go();
+  Side2Stop();
+  Serial.begin(9600);
+  attachInterrupt(0, walkButton, HIGH);
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  buttonState = digitalRead(crossButton);
-  
-  while (buttonState == LOW) {
-      buttonState = digitalRead(crossButton);
-      Side2Stop();
-      Side1Go();
-  }
-  
-  transition(1);
-  buttonState = digitalRead(crossButton);
+  if (timeRemaining < 4) {
+    Serial.println();
+    Serial.println();
+    Serial.println();
 
-  while (buttonState == LOW) {
-    buttonState = digitalRead(crossButton);
-    Side1Stop();
-    Side2Go();    
+    switch(state) {
+    case 1:
+      newState = 2;
+      timeRemaining = 8;
+      light(greenDrive1, false);
+      light(yellowDrive1, true);  
+      break;
+    case 2:
+      newState = 3;
+      timeRemaining = 40;
+      Side1Stop();
+      Side2Go();    
+      break;
+    case 3:
+      newState = 4;
+      timeRemaining = 8;
+      light(greenDrive2, false);
+      light(yellowDrive2, true);
+      break; 
+    case 4:
+      newState = 1;
+      timeRemaining = 40;
+      Side1Go();
+      Side2Stop(); 
+    }
+    state = newState;
+    
+   
   }
- 
- transition(2);
   
+  if ((state == 3) && (timeRemaining < 20)) {
+    light(whiteWalk2, false);
+    if (timeRemaining%2) {
+      light(redWalk2, true);
+    } else {
+      light(redWalk2, false);
+    }
+  }
+  
+    if ((state == 1) && (timeRemaining < 20)) {
+    light(whiteWalk1, false);
+    if (timeRemaining%2) {
+      light(redWalk1, true);
+    } else {
+      light(redWalk1, false);
+    }
+  }
+  
+  buttonState = digitalRead(crossButton);
+  Serial.print("button: ");
+  Serial.println(buttonState);
+  timeRemaining--;
+  Serial.print("This is the state: ");
+  Serial.print(state);
+  Serial.print("\t Time remaining: ");
+  Serial.println(timeRemaining);
+  delay(250);
 }
